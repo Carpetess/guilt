@@ -8,7 +8,7 @@ use std::{
     io::{BufReader, Read, Write},
 };
 
-use clap::{Arg, ArgAction, Command};
+use clap::{Arg, ArgAction, ArgMatches, Command};
 
 fn main() {
     let matches = Command::new("Guilt")
@@ -43,60 +43,13 @@ fn main() {
         .get_matches();
     match matches.subcommand() {
         Some(("init", _)) => {
-            fs::create_dir(".git").unwrap();
-            fs::create_dir(".git/objects").unwrap();
-            fs::create_dir(".git/refs").unwrap();
-            fs::write(".git/HEAD", "ref: refs/heads/main\n").unwrap();
-            println!("Initialized git directory")
+            init();
         }
         Some(("cat-file", sub_matches)) => {
-            if sub_matches.get_flag("pretty-print") {
-                println!("Pretty-print selected")
-            }
-            if let Some(object_path) = sub_matches.get_one::<String>("object-path") {
-                let file = fs::read(format!(
-                    ".git/objects/{}/{}",
-                    &object_path[..2],
-                    &object_path[2..]
-                ))
-                .unwrap();
-                let mut z = ZlibDecoder::new(&file[..]);
-                let mut s = String::new();
-                z.read_to_string(&mut s).unwrap();
-                let split_s: Vec<&str> = s.split('\0').collect();
-                println!("{}", split_s[1]);
-            }
+            cat_file(sub_matches);
         }
         Some(("hash-object", sub_matches)) => {
-            if let Some(object_name) = sub_matches.get_one::<String>("object-name") {
-                let mut f = File::open(object_name).unwrap();
-                let mut buffer = String::new();
-                f.read_to_string(&mut buffer).unwrap();
-                let blob = format!("blob {}\0{}", buffer.len(), buffer);
-
-                let mut hasher = Sha1::new();
-                hasher.update(&blob);
-                let hashed_blob: String = format!("{:x}", hasher.finalize());
-                println!("{}", &hashed_blob[..]);
-
-                if sub_matches.get_flag("write") {
-                    let mut encoder =
-                        ZlibEncoder::new(BufReader::new(blob.as_bytes()), Compression::default());
-                    let mut buffer = Vec::new();
-                    encoder.read_to_end(&mut buffer).unwrap();
-
-                    let file_dir = format!(".git/objects/{}", &hashed_blob[..2]);
-                    let file_path = format!("{}/{}", &file_dir, &hashed_blob[2..]);
-
-                    if !file_exists(&file_dir) {
-                        create_dir(format!(".git/objects/{}", &hashed_blob[..2])).unwrap();
-                    }
-                    if !file_exists(&file_path) {
-                        let mut f = File::create(file_path).unwrap();
-                        f.write_all(buffer.as_slice()).unwrap();
-                    }
-                }
-            }
+            hash_object(sub_matches);
         }
 
         _ => (),
@@ -104,8 +57,88 @@ fn main() {
 
     eprintln!("logs from your program will appear here!");
 }
+/// Initiates the git repository creating all the required directories.
+pub fn init() {
+    match fs::create_dir(".git") {
+        Ok(_) => (),
+        Err(_) => {
+            println!("A git repository has already been created");
+            println!("Use guilt help for more information about guilt");
+            return
+        }
+    }
+    fs::create_dir(".git/objects").unwrap();
+    fs::create_dir(".git/refs").unwrap();
+    fs::write(".git/HEAD", "ref: refs/heads/main\n").unwrap();
+    println!("Initialized git directory")
+}
+/// Reads the contents of the file corresponding to hash given to the program, decrypts it using
+/// Zlib and then prints the contents of the object.
+pub fn cat_file(sub_matches: &ArgMatches) {
+    if let Some(object_path) = sub_matches.get_one::<String>("object-path") {
+        let file = fs::read(format!(
+            ".git/objects/{}/{}",
+            &object_path[..2],
+            &object_path[2..]
+        ))
+        .unwrap();
+        let mut z = ZlibDecoder::new(&file[..]);
+        let mut s = String::new();
+        z.read_to_string(&mut s).unwrap();
+        let split_s: Vec<&str> = s.split('\0').collect();
+        println!("{}", split_s[1]);
+    }
+    if sub_matches.get_flag("pretty-print") {
+        println!("Pretty-print selected")
+    }
+}
+/// Reads the contents of the file to hash, places it in front of an header with information
+/// regarding the contents of the file, hashes them using SHA1 and prints them to the terminal.
+///
+/// # Contents of the result file (decrypted)
+///
+/// (type) (size)\0(content)
+///
+/// # Exmaple
+///
+/// blob 12\0Hello World!
+///
+/// If the w flag is used, then contents of the file are encrypted using Zlib and stored inside the
+/// objects folder in a folder corresponding to the objects SHA1 hash calculated previously
+///
+///
+pub fn hash_object(sub_matches: &ArgMatches) {
+    if let Some(object_name) = sub_matches.get_one::<String>("object-name") {
+        let mut f = File::open(object_name).unwrap();
+        let mut buffer = String::new();
+        f.read_to_string(&mut buffer).unwrap();
+        let blob = format!("blob {}\0{}", buffer.len(), buffer);
+
+        let mut hasher = Sha1::new();
+        hasher.update(&blob);
+        let hashed_blob: String = format!("{:x}", hasher.finalize());
+        println!("{}", &hashed_blob[..]);
+
+        if sub_matches.get_flag("write") {
+            let mut encoder =
+                ZlibEncoder::new(BufReader::new(blob.as_bytes()), Compression::default());
+            let mut buffer = Vec::new();
+            encoder.read_to_end(&mut buffer).unwrap();
+
+            let file_dir = format!(".git/objects/{}", &hashed_blob[..2]);
+            let file_path = format!("{}/{}", &file_dir, &hashed_blob[2..]);
+
+            if !file_exists(&file_dir) {
+                create_dir(format!(".git/objects/{}", &hashed_blob[..2])).unwrap();
+            }
+            if !file_exists(&file_path) {
+                let mut f = File::create(file_path).unwrap();
+                f.write_all(buffer.as_slice()).unwrap();
+            }
+        }
+    }
+}
 
 pub fn file_exists(path: &str) -> bool {
     fs::metadata(path).is_ok()
 }
-
