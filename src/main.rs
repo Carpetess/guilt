@@ -144,15 +144,23 @@ fn hash_object(sub_matches: &ArgMatches) {
 
 fn update_index(sub_matches: &ArgMatches) {
     if let Some(file_info) = sub_matches.get_one::<String>("add") {
-            println!("{}", file_info); 
-        if let Some(cache_info) = sub_matches.get_many::<String>("cacheinfo") {
-            let tmp : Vec<_> = cache_info.collect();
-            println!("{:?}", tmp )
+        let file_info: &str = file_info;
+        match file_info {
+            "" => {
+                if let Some(cache_info) = sub_matches.get_many::<String>("cacheinfo") {
+                    let tmp: Vec<_> = cache_info.collect();
+                    
+                }
+            }
+            _ => {
+                let blob: Blob = Blob::new(file_info);
+                blob.store_oject();
+                let f = File::open(object_name);
+
+            }
         }
     }
 }
-
-
 
 fn kind(file_hash: &str) -> String {
     let file_name = &file_hash[2..];
