@@ -1,3 +1,4 @@
+#![allow(unused_variables)]
 mod args;
 mod git_objects;
 
@@ -42,6 +43,7 @@ fn hash_object(hash_object_args: HashObjectCommand) {
 }
 
 fn update_index(update_index_args: UpdateIndexCommand) {
+
 
 }
 
