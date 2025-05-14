@@ -1,4 +1,5 @@
 mod args;
+mod git_objects;
 
 use args::{GuiltArgs, Command, CatFileCommand, HashObjectCommand, UpdateIndexCommand};
 use std::{fs, io::Error};
