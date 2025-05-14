@@ -10,7 +10,7 @@ use clap:: {
 pub struct GuiltArgs{
     
     #[clap(subcommand)]
-    main_command: Command
+    pub main_command: Command
 
 }
 
