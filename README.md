@@ -9,7 +9,7 @@ A very barebones version of git that only has a few operations that git supports
 - git write-tree
 
 This basically gives you enough tools to version manage a repository, but it's very unpractical, since all the commands have to be written by hand.
-I don't think this project will be continued to be developed in the future after I finish all the feature, but who knows?
+I don't think this project will be continued to be developed in the future after I finish all the features, but who knows?
 
 ### Installation
 
