@@ -1,13 +1,6 @@
 #![allow(dead_code)]
-use super::git_object::GitObject;
-use flate2::{
-    read::{ZlibDecoder, ZlibEncoder},
-    Compression,
-};
-use std::{
-    fs::{create_dir_all, File},
-    io::{BufReader, Read, Write},
-};
+use flate2::read::ZlibDecoder;
+use std::{fs::File, io::Read};
 
 #[derive(Debug)]
 pub struct Blob {
@@ -21,7 +14,7 @@ impl Blob {
         f.read_to_end(&mut buffer).unwrap();
         Self { content: buffer }
     }
-    
+
     pub fn load_object(file_hash: &str) -> Self {
         let f = File::open(format!(
             ".git/objects/{}/{}",
@@ -42,42 +35,12 @@ impl Blob {
             content: content[1].as_bytes().to_vec(),
         }
     }
-}
 
-impl GitObject for Blob {
-    
-
-    fn pretty_print(&self) {
-        println! {"{}",  String::from_utf8(self.content.clone()).unwrap()
-        }
+    pub fn get_content(&self) -> &Vec<u8> {
+        self.content.as_ref()
     }
 
-    fn store_oject(&self) {
-        let object_content = self.format_object();
-        let mut encoder = ZlibEncoder::new(
-            BufReader::new(object_content.as_bytes()),
-            Compression::default(),
-        );
-        let mut buffer = Vec::new();
-        encoder
-            .read_to_end(&mut buffer)
-            .expect("Error encoding blob");
-
-        let object_hash = self.hash_object();
-        create_dir_all(format!(".git/objects/{}", &object_hash[..2]))
-            .expect("Error while trying to initialize the blob's directory");
-        let mut f: File = File::create(format!(
-            ".git/objects/{}/{}",
-            &object_hash[..2],
-            &object_hash[2..]
-        ))
-        .expect("Error creating the blob File");
-        f.write_all(buffer.as_slice())
-            .expect("Error writting to the blob file");
-    }
-
-
-    fn format_object(&self) -> String {
+    pub fn get_formated_content(&self) -> String {
         format!(
             "blob {}\0{}",
             self.content.len(),

@@ -1,5 +1,6 @@
 #![allow(unused_variables)]
 mod args;
+mod file_handling;
 mod git_objects;
 
 use args::{GuiltArgs, Command, CatFileCommand, HashObjectCommand, UpdateIndexCommand};

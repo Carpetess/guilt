@@ -1,7 +1,6 @@
 #![allow(dead_code)]
 use flate2::read::ZlibDecoder;
 
-use super::git_object::GitObject;
 use std::{fs::File, io::Read};
 
 const PATH_TO_INDEX: &str = ".git/index";
@@ -26,15 +25,4 @@ impl Tree {
     }
 }
 
-impl GitObject for Tree {
-    fn pretty_print(&self) {
-           println! {"{}",  String::from_utf8(self.content.clone()).unwrap()}         
-    }
-    fn format_object(&self) -> String {
-        format!(
-            "tree {}\0{}",
-            self.content.len(),
-            String::from_utf8(self.content.clone()).unwrap()
-        )
-    }
-}
+
