@@ -16,10 +16,12 @@ I don't think this project will be continued to be developed in the future after
 Clone the repository and do one of the following:
 
     $ cargo install --path=.
-    $ echo "export PATH="$PATH:$HOME/.cargo/bin""
+    $ export PATH="$HOME/.cargo/bin:$PATH"
 
     This option installs the binary locally and adds the folder where all rust binaries 
-    are downloaded and lets you call the CLI app directly.
+    are downloaded into to your PATH, allowing you to call the CLI app directly.
+    Note that this is temporary and the `export` command will need to be rerun for each new shell.
+    See adding Cargo's bin to your path for a permanent solution.
 
     $ mkdir new_repo
     $ cd new_repo
