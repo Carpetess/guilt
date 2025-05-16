@@ -2,7 +2,7 @@
 
 use std::{
     fs::{create_dir_all, File},
-    io::{BufReader, Read, Write}, string,
+    io::{BufReader, Read, Write},
 };
 
 use flate2::{read::{ZlibDecoder, ZlibEncoder}, Compression};
@@ -12,15 +12,14 @@ const GIT_OBJECTS_DIR: &str = ".git/objects/";
 
 pub fn get_hash(formatted_content: &str) -> String {
     let mut hasher = Sha1::new();
-
     hasher.update(formatted_content);
     let hashed_object_content = format!("{:x}", hasher.finalize());
     hashed_object_content
 }
 
-pub fn store_oject(raw_content: &Vec<u8>, object_hash: &str) {
+pub fn store_oject(formatted_content: String, object_hash: &str) {
     let mut encoder = ZlibEncoder::new(
-        BufReader::new(raw_content.as_slice()),
+        BufReader::new(formatted_content.as_bytes()),
         Compression::default(),
     );
     let mut buffer = Vec::new();
@@ -37,6 +36,7 @@ pub fn store_oject(raw_content: &Vec<u8>, object_hash: &str) {
         &object_hash[2..]
     ))
     .expect("Error creating the object File");
+    
     f.write_all(buffer.as_slice())
         .expect("Error writting to the object file");
 }
@@ -59,12 +59,9 @@ pub fn read_encrypted_file(file_hash: &str) -> Vec<u8> {
         content.as_bytes().to_vec()
 }
 
-pub fn parse_content(file_content: Vec<u8>) -> &str{
-    let mut string_from_raw_data = std::str::from_utf8(file_content.as_slice()).unwrap();
+pub fn parse_content(file_content: Vec<u8>) -> String {
+    let content_string = String::from_utf8(file_content).unwrap();
+    let content_split: Vec<&str> = content_string.split("\0").collect();
+    content_split[1].to_owned()
     
-    string_from_raw_data.split("\0").last().unwrap().clone()
-
-
-    
-
 }

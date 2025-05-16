@@ -1,8 +1,8 @@
-use std::{fs, io, process, u8};
+use std::{fs, io, process};
 
 use crate::{
     args::{CatFileCommand, HashObjectCommand, UpdateIndexCommand},
-    file_handling::file_handler::{self, hash_object},
+    file_handling::file_handler::{self}, git_objects::blob::Blob,
 };
 
 const GIT_REPO: &str = ".git";
@@ -28,7 +28,7 @@ pub fn cat_file(cat_file_args: CatFileCommand) {
     let mut content_to_print: Vec<u8>;
     let file_content: Vec<u8> = file_handler::read_encrypted_file(&cat_file_args.object_hash);
     if cat_file_args.pretty_print {
-        let content = file_handler::pretty_print_git_object(file_content);
+        let content = file_handler::parse_content(file_content);
         println!("{}", content);
     } else {
         println!("{}", std::str::from_utf8(file_content.as_slice()).unwrap());
@@ -36,6 +36,17 @@ pub fn cat_file(cat_file_args: CatFileCommand) {
 }
 
 pub fn hash_object(hash_object_args: HashObjectCommand) {
+    let blob = Blob::new(&hash_object_args.path_to_object);
+
+    let formatted_content = blob.get_formated_content(); 
+
+    let hash = file_handler::get_hash(&formatted_content);
+
+    if hash_object_args.write {
+        file_handler::store_oject(formatted_content, &hash);
+    }
+    println!("{}", hash);
+
 
 }
 
