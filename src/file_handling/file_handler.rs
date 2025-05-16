@@ -2,15 +2,15 @@
 
 use std::{
     fs::{create_dir_all, File},
-    io::{BufReader, Read, Write},
+    io::{BufReader, Read, Write}, string,
 };
 
-use flate2::{bufread::ZlibEncoder, Compression};
+use flate2::{read::{ZlibDecoder, ZlibEncoder}, Compression};
 use sha1::{Digest, Sha1};
 
 const GIT_OBJECTS_DIR: &str = ".git/objects/";
 
-fn hash_object(formatted_content: &str) -> String {
+pub fn get_hash(formatted_content: &str) -> String {
     let mut hasher = Sha1::new();
 
     hasher.update(formatted_content);
@@ -18,7 +18,7 @@ fn hash_object(formatted_content: &str) -> String {
     hashed_object_content
 }
 
-fn store_oject(raw_content: &Vec<u8>, object_hash: &str) {
+pub fn store_oject(raw_content: &Vec<u8>, object_hash: &str) {
     let mut encoder = ZlibEncoder::new(
         BufReader::new(raw_content.as_slice()),
         Compression::default(),
@@ -39,4 +39,32 @@ fn store_oject(raw_content: &Vec<u8>, object_hash: &str) {
     .expect("Error creating the object File");
     f.write_all(buffer.as_slice())
         .expect("Error writting to the object file");
+}
+
+pub fn read_encrypted_file(file_hash: &str) -> Vec<u8> {
+        let f = File::open(format!(
+            "{}/{}/{}",
+            GIT_OBJECTS_DIR,
+            &file_hash[..2],
+            &file_hash[2..]
+        ))
+        .expect("Error opening Blob");
+
+        let mut decoder = ZlibDecoder::new(f);
+        let mut content = String::new();
+        decoder
+            .read_to_string(&mut content)
+            .expect("Error decoding the contents of the blob");
+
+        content.as_bytes().to_vec()
+}
+
+pub fn parse_content(file_content: Vec<u8>) -> &str{
+    let mut string_from_raw_data = std::str::from_utf8(file_content.as_slice()).unwrap();
+    
+    string_from_raw_data.split("\0").last().unwrap().clone()
+
+
+    
+
 }

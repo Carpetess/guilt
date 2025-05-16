@@ -1,5 +1,5 @@
 #![allow(dead_code)]
-use flate2::read::ZlibDecoder;
+use crate::file_handling::file_handler;
 use std::{fs::File, io::Read};
 
 #[derive(Debug)]
@@ -15,25 +15,9 @@ impl Blob {
         Self { content: buffer }
     }
 
-    pub fn load_object(file_hash: &str) -> Self {
-        let f = File::open(format!(
-            ".git/objects/{}/{}",
-            &file_hash[..2],
-            &file_hash[2..]
-        ))
-        .expect("Error opening Blob");
-
-        let mut decoder = ZlibDecoder::new(f);
-        let mut content = String::new();
-        decoder
-            .read_to_string(&mut content)
-            .expect("Error decoding the contents of the blob");
-
-        let content: Vec<&str> = content.split("\0").collect();
-
-        Blob {
-            content: content[1].as_bytes().to_vec(),
-        }
+    pub fn load_object(blob_hash: &str) -> Self {
+        let content: Vec<u8> = file_handler::read_encrypted_file(blob_hash);
+        Blob { content }
     }
 
     pub fn get_content(&self) -> &Vec<u8> {
