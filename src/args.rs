@@ -23,20 +23,19 @@ pub enum Command {
     /// Hash an object.
     HashObject(HashObjectCommand),
     /// Update the index by adding a file to it.
-    UpdateIndex(UpdateIndexCommand),
+    MakeTree(MakeTreeCommand),
     /// Write out the tree object in the index file into a commit object.
     WriteTree
 }
 
 #[derive(Debug, Args)]
-pub struct UpdateIndexCommand {
-    /// Adds a file that is not yet in your staging area, by hashing it as a blob and then adding
-    /// it to the index
+pub struct MakeTreeCommand{
+    // Do not check if the arguments are valid objects.
     #[arg(long)]
-    pub add: String,
-    /// Should be formated as [MODE] \ [SHA-1] [FILENAME].
+    pub missing: bool,
+    // Make several trees in one input, by separating each tree with two new lines: \n\n
     #[arg(long)]
-    pub cacheinfo: String
+    pub batch: bool,
 }
 
 #[derive(Debug, Args)]

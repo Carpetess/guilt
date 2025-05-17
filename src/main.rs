@@ -22,8 +22,8 @@ fn main() {
         Command::HashObject(hash_object_args) => {
             subcommands::hash_object(hash_object_args);
         }
-        Command::UpdateIndex(update_index_args) => {
-            subcommands::update_index(update_index_args);
+        Command::MakeTree(make_tree_args) => {
+            subcommands::mk_tree(make_tree_args);
         }
     }
 }
